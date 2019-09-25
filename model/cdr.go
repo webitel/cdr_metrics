@@ -131,6 +131,11 @@ func (cdr *Cdr) HangupCode() int {
 	return 0
 }
 
+func (cdr *Cdr) Uuid() string {
+	uuid, _ := cdr.Variables.GetString("uuid")
+	return uuid
+}
+
 func CdrFromJson(data []byte) *Cdr {
 	var cdr *Cdr
 	json.Unmarshal(data, &cdr)

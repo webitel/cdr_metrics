@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"github.com/webitel/cdr_metrics/metrics"
 	"github.com/webitel/wlog"
 )
@@ -34,6 +35,7 @@ func (l *Listener) ListenEvents() {
 
 		select {
 		case m := <-l.app.mq.ConsumeCdr():
+			wlog.Debug(fmt.Sprintf("receive call uuid=%s user_agent=%s", m.Uuid(), m.UserAgent()))
 			l.cdrMetric.Push(m)
 		case <-l.stop:
 			return
