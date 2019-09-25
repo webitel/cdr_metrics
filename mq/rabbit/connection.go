@@ -115,8 +115,8 @@ func (c *connection) subscribe() {
 	msgs, err := c.channel.Consume(
 		c.queueName,
 		"",
-		false,
-		false,
+		true,
+		true,
 		false,
 		true,
 		nil,
