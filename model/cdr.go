@@ -124,6 +124,13 @@ func (cdr *Cdr) Duration() int {
 	return 0
 }
 
+func (cdr *Cdr) HangupCode() int {
+	if i, ok := cdr.Variables.GetInt("hangup_cause_q850"); ok {
+		return i
+	}
+	return 0
+}
+
 func CdrFromJson(data []byte) *Cdr {
 	var cdr *Cdr
 	json.Unmarshal(data, &cdr)

@@ -9,7 +9,8 @@ import (
 )
 
 type MetricCdr struct {
-	gw                  *gateway.Gateway
+	gw *gateway.Gateway
+
 	inAudioMos          *prometheus.GaugeVec
 	inRawBytes          *prometheus.GaugeVec
 	inMediaBytes        *prometheus.GaugeVec
@@ -23,6 +24,8 @@ type MetricCdr struct {
 
 	billSec  *prometheus.GaugeVec
 	duration *prometheus.GaugeVec
+
+	hangupCode *prometheus.GaugeVec
 }
 
 func (m *MetricCdr) reset() {
@@ -39,6 +42,8 @@ func (m *MetricCdr) reset() {
 
 	m.billSec.Reset()
 	m.duration.Reset()
+
+	m.hangupCode.Reset()
 
 }
 
@@ -146,6 +151,15 @@ func NewCdr(space string, gw *gateway.Gateway) *MetricCdr {
 		model.Cdr{}.Labels(),
 	)
 
+	m.hangupCode = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Namespace: space,
+			Name:      "cdr_hangup_code",
+			Help:      "Cdr hangup code",
+		},
+		model.Cdr{}.Labels(),
+	)
+
 	return m
 }
 
@@ -153,6 +167,8 @@ func (m *MetricCdr) Push(cdr *model.Cdr) error {
 	m.inAudioMos.WithLabelValues(cdr.Names()...).Add(cdr.InboundMos())
 	m.inRawBytes.WithLabelValues(cdr.Names()...).Add(float64(cdr.InboundRawBytes()))
 	m.inMediaBytes.WithLabelValues(cdr.Names()...).Add(float64(cdr.InboundMediaBytes()))
+	m.inQualityPercentage.WithLabelValues(cdr.Names()...).Add(float64(cdr.InboundQualityPercentage()))
+
 	m.inJitterLossRate.WithLabelValues(cdr.Names()...).Add(float64(cdr.InboundJitterLossRate()))
 	m.inJitterMaxVariance.WithLabelValues(cdr.Names()...).Add(float64(cdr.InboundJitterMaxVariance()))
 	m.inJitterMinVariance.WithLabelValues(cdr.Names()...).Add(float64(cdr.InboundJitterMinVariance()))
@@ -163,8 +179,10 @@ func (m *MetricCdr) Push(cdr *model.Cdr) error {
 	m.billSec.WithLabelValues(cdr.Names()...).Add(float64(cdr.BillSec()))
 	m.duration.WithLabelValues(cdr.Names()...).Add(float64(cdr.Duration()))
 
-	if err := m.gw.Push(cdr.GetInstance(), m.inAudioMos, m.inRawBytes, m.inMediaBytes, m.inJitterLossRate, m.inJitterMaxVariance,
-		m.inJitterMinVariance, m.outRawBytes, m.outMediaBytes); err != nil {
+	m.hangupCode.WithLabelValues(cdr.Names()...).Add(float64(cdr.HangupCode()))
+
+	if err := m.gw.Push(cdr.GetInstance(), m.inAudioMos, m.inRawBytes, m.inMediaBytes, m.inQualityPercentage, m.inJitterLossRate, m.inJitterMaxVariance,
+		m.inJitterMinVariance, m.outRawBytes, m.outMediaBytes, m.billSec, m.duration, m.hangupCode); err != nil {
 		wlog.Error(fmt.Sprintf("[cdr_metric] could not push completion time to gateway: %s", err.Error()))
 	} else {
 		wlog.Debug("[cdr_metric] send data - success")
