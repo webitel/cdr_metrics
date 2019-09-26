@@ -169,13 +169,11 @@ func (c *Cdr) UserAgent() string {
 }
 
 func (c Cdr) Labels() []string {
-	return []string{"uuid", "call_uuid", "sip_network_ip", "remote_media_ip", "user_agent"}
+	return []string{"sip_network_ip", "remote_media_ip"}
 }
 
 func (c *Cdr) Names() []string {
-	uuid, _ := c.Variables.GetString("uuid")
-	callUUid, _ := c.Variables.GetString("call_uuid")
 	sipNetworkIp, _ := c.Variables.GetString("sip_network_ip")
 	remoteAudioIp, _ := c.Variables.GetString("remote_media_ip")
-	return []string{uuid, callUUid, sipNetworkIp, remoteAudioIp, c.UserAgent()}
+	return []string{sipNetworkIp, remoteAudioIp}
 }
